@@ -1,7 +1,7 @@
 import pandas as pd
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from df_and_order.helpers import build_class_instance
 
