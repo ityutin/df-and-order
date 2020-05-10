@@ -6,6 +6,12 @@ from typing import List, Tuple
 from df_and_order.helpers import build_class_instance
 
 
+TRANSFORM_ID_KEY = 'transform_id'
+TRANSFORM_MODULE_PATH_KEY = 'module_path'
+TRANSFORM_PARAMS_KEY = 'params'
+TRANSFORM_NEED_CACHE_KEY = 'needs_cache'
+
+
 @dataclass
 class DfTransformConfig:
     transform_id: str
@@ -33,10 +39,6 @@ class DfTransformConfig:
         }
 
         return self.transform_id, transform_dict
-TRANSFORM_ID_KEY = 'transform_id'
-TRANSFORM_MODULE_PATH_KEY = 'module_path'
-TRANSFORM_PARAMS_KEY = 'params'
-TRANSFORM_NEED_CACHE_KEY = 'needs_cache'
 
 
 class DfTransform(ABC):
