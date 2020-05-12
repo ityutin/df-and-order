@@ -21,7 +21,7 @@ class DfTransformConfig:
     transform_id: optional str
         Unique identifier of a transform.
     in_memory_steps: list of DfTransformStepConfig
-        Those steps that are performed every time we read a dataset from the disk.
+        Those steps that are performed every time we read a dataframe from the disk.
     permanent_steps: list of DfTransformStepConfig
         Those steps result of which is persisted on the disk for future access.
     """
