@@ -12,6 +12,10 @@ TRANSFORM_STEP_NEED_CACHE_KEY = 'needs_cache'
 
 @dataclass
 class DfTransformStepConfig:
+    """
+    Dataclass for storing module path of some DfTransformStep
+    as well as its init parameters.
+    """
     module_path: str
     params: dict
 
@@ -35,8 +39,26 @@ class DfTransformStepConfig:
 
 
 class DfTransformStep(ABC):
+    """
+    Encapsulates logic of some dataframe transformation.
+    Every subclass must implement 'transform' method with
+    custom logic.
+    """
     @staticmethod
     def build_transform(config: DfTransformStepConfig):
+        """
+        Creates DfTransformStep instance out of config.
+
+        Parameters
+        ----------
+        config: DfTransformStepConfig
+            Contains information about DfTransformStep subclass
+            and parameters to init it with.
+
+        Returns
+        -------
+        DfTransformStep instance.
+        """
         params = config.params
 
         transform = build_class_instance(module_path=config.module_path,

@@ -5,6 +5,10 @@ from df_and_order.df_transform_step import DfTransformStep
 
 
 class DropColsTransformStep(DfTransformStep):
+    """
+    Example built-in transform that simply drops some
+    undesired columns from a dataframe.
+    """
     def __init__(self, cols_to_drop: List[str]):
         super().__init__()
 

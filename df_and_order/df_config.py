@@ -1,8 +1,7 @@
-from typing import Optional, List
+from typing import Optional
 import os
 import yaml
 
-from df_and_order.df_transform_step import DfTransformStepConfig
 from df_and_order.df_transform import DfTransformConfig
 
 DATASET_ID_KEY = 'dataset_id'
@@ -13,26 +12,54 @@ TRANSFORMS_KEY = 'transforms'
 
 
 class DfConfig:
+    """
+    Interface for working with a serialized dataframe config file.
+
+    Init parameters
+    ----------
+    dataset_id: str
+        Unique identifier of your dataframe.
+    dir_path: str
+        Location of a folder where config file should be read from.
+    """
     def __init__(self, dataset_id: str, dir_path: str):
         self._dir_path = dir_path
         with open(self._config_path()) as config_file:
             config_dict = yaml.safe_load(config_file)
 
         dataset_check = config_dict[DATASET_ID_KEY] == dataset_id
-        assert dataset_check, "config_dict doesn't belong to requested dataset"
+        assert dataset_check, "config_dict doesn't belong to requested dataframe"
 
         self._config_dict = config_dict
 
     @staticmethod
     def config_exists(dir_path: str) -> bool:
+        """
+        Checks whether a dataframe config file exists at the provided path.
+
+        Parameters
+        ----------
+        dir_path: str
+            Location of a folder where config file should be read from.
+
+        Returns
+        -------
+        True if config file exists, False otherwise
+        """
         path_to_check = DfConfig._config_path_for(dir_path=dir_path)
         return os.path.exists(path_to_check)
 
     def _config_path(self) -> str:
+        """
+        Gets a path to the config using the given dir_path
+        """
         return self._config_path_for(dir_path=self._dir_path)
 
     @staticmethod
     def _config_path_for(dir_path: str) -> str:
+        """
+        Gets a path to the config using the given dir_path
+        """
         return DfConfig._path_for_file(dir_path=dir_path, filename='dataset_config.yaml')
 
     @staticmethod
@@ -46,6 +73,29 @@ class DfConfig:
                       transformed_dataset_format: str,
                       metadata: Optional[dict] = None,
                       transform: Optional[DfTransformConfig] = None):
+        """
+        Creates config file at the given location.
+
+        Parameters
+        ----------
+        dir_path: str
+            Location of a folder where config file should be saved to
+        dataset_id: str
+            Unique identifier of your dataframe.
+        initial_dataset_format: str
+            Format extension for an initial dataframe before any transformation.
+        transformed_dataset_format: str
+            # TODO: let a transformation decide in which format to save a dataframe
+            Format extension for a transformed dataframe.
+        metadata: optional dict
+            Any information you want to store in the config file as a reference or for future use.
+        transform: DfTransformConfig
+            Object that describes all the transformation steps required.
+
+        Returns
+        -------
+        Nothing, but creates the config in the filesystem.
+        """
         assert not DfConfig.config_exists(dir_path=dir_path), f"Config for df {dataset_id} already exists"
 
         config_path = DfConfig._config_path_for(dir_path=dir_path)
@@ -54,6 +104,7 @@ class DfConfig:
             DATASET_INITIAL_FORMAT_KEY: initial_dataset_format,
             DATASET_TRANSFORMED_FORMAT_KEY: transformed_dataset_format,
         }
+
         if metadata:
             config_dict[METADATA_KEY] = metadata
 
@@ -66,16 +117,6 @@ class DfConfig:
         DfConfig._save_at_path(config_dict=config_dict,
                                config_path=config_path)
 
-    @staticmethod
-    def _add_transform_configs(config_dict: dict,
-                               key: str,
-                               transforms: List[DfTransformStepConfig]):
-        transform_dicts = [config.to_dict() for config in transforms]
-        transforms_list = config_dict.get(key, [])
-        transforms_list += transform_dicts
-        config_dict[key] = transforms_list
-        return config_dict
-
     @property
     def initial_dataset_format(self) -> str:
         return self._config_dict[DATASET_INITIAL_FORMAT_KEY]
@@ -85,6 +126,18 @@ class DfConfig:
         return self._config_dict[DATASET_TRANSFORMED_FORMAT_KEY]
 
     def transforms_by(self, transform_id: str) -> DfTransformConfig:
+        """
+        Gets the transform representation from the config file.
+
+        Parameters
+        ----------
+        transform_id: str
+            Unique identifier of a transform
+
+        Returns
+        -------
+        DfTransformConfig that describes all the transformation steps.
+        """
         maybe_transforms_dict = self._config_dict.get(TRANSFORMS_KEY)
         assert maybe_transforms_dict, "Config contains no transforms"
         maybe_transform_dict = maybe_transforms_dict.get(transform_id)
@@ -97,6 +150,20 @@ class DfConfig:
     def register_transform(self,
                            transform: DfTransformConfig,
                            filename: str):
+        """
+        Adds a new transform to the config file if possible.
+
+        Parameters
+        ----------
+        transform: DfTransformConfig
+            Object that describes all the transformation steps required.
+        filename: str
+            What a filename for the transformation would be to look for already existing one.
+
+        Returns
+        -------
+        Nothing, but updates the config in the filesystem.
+        """
         transform_id, transform_dict = transform.to_dict()
         maybe_transforms = self._config_dict.get(TRANSFORMS_KEY, {})
         if maybe_transforms and maybe_transforms.get(transform_id):
@@ -109,6 +176,9 @@ class DfConfig:
         self._save()
 
     def _save(self):
+        """
+        Serializes config to the disk
+        """
         self._save_at_path(config_dict=self._config_dict,
                            config_path=self._config_path())
 

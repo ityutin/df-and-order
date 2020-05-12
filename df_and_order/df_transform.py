@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from df_and_order.df_transform_step import DfTransformStepConfig
 
@@ -9,6 +9,22 @@ TRANSFORM_PERMANENT_KEY = 'permanent'
 
 
 class DfTransformConfig:
+    """
+    Describes how a transformation should be performed.
+    For any transformation one or many steps can be used.
+    Those steps can be performed in memory only or their result
+    can be serialized to the disk. Either in_memory or permanent or both steps
+    should be provided in the init method.
+
+    Parameters
+    ----------
+    transform_id: optional str
+        Unique identifier of a transform.
+    in_memory_steps: list of DfTransformStepConfig
+        Those steps that are performed every time we read a dataset from the disk.
+    permanent_steps: list of DfTransformStepConfig
+        Those steps result of which is persisted on the disk for future access.
+    """
     def __init__(self,
                  transform_id: str,
                  in_memory_steps: Optional[List[DfTransformStepConfig]] = None,
@@ -31,7 +47,14 @@ class DfTransformConfig:
     def permanent_steps(self) -> Optional[List[DfTransformStepConfig]]:
         return self._permanent_steps
 
-    def to_dict(self):
+    def to_dict(self) -> Tuple[str, dict]:
+        """
+        Converts an instance to serializable dictionary
+
+        Returns
+        -------
+        tuple of str and dict, transform_id and transform's dictionary representation.
+        """
         result = {}
 
         if self._in_memory_steps:
@@ -47,10 +70,24 @@ class DfTransformConfig:
     @staticmethod
     def from_dict(transform_id: str,
                   transform_dict: dict):
-        in_memory_transforms = DfTransformConfig._transform_configs_from(transform_dict=transform_dict,
-                                                                         key=TRANSFORM_IN_MEMORY_KEY)
-        permanent_transforms = DfTransformConfig._transform_configs_from(transform_dict=transform_dict,
-                                                                         key=TRANSFORM_PERMANENT_KEY)
+        """
+        Builds DfTransformConfig instance out of serialized dictionary.
+
+        Parameters
+        ----------
+        transform_id: optional str
+            Unique identifier of a transform.
+        transform_dict:
+            Dictionary representation of DfTransformConfig
+
+        Returns
+        -------
+        DfTransformConfig instance.
+        """
+        in_memory_transforms = DfTransformConfig._transform_step_configs_from(transform_dict=transform_dict,
+                                                                              key=TRANSFORM_IN_MEMORY_KEY)
+        permanent_transforms = DfTransformConfig._transform_step_configs_from(transform_dict=transform_dict,
+                                                                              key=TRANSFORM_PERMANENT_KEY)
 
         result = DfTransformConfig(transform_id=transform_id,
                                    in_memory_steps=in_memory_transforms,
@@ -58,8 +95,22 @@ class DfTransformConfig:
         return result
 
     @staticmethod
-    def _transform_configs_from(transform_dict: dict,
-                                key: str) -> Optional[List[DfTransformStepConfig]]:
+    def _transform_step_configs_from(transform_dict: dict,
+                                     key: str) -> Optional[List[DfTransformStepConfig]]:
+        """
+        When deserializing we need to transform steps into objects as well.
+
+        Parameters
+        ----------
+        transform_dict:
+            Dictionary representation of DfTransformConfig
+        key: str
+            Key for transform steps.
+
+        Returns
+        -------
+        Optional list of DfTransformStepConfig objects.
+        """
         transform_dicts = transform_dict.get(key)
         transforms = None
         if transform_dicts:
