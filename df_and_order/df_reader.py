@@ -1,10 +1,11 @@
 import os
 import pandas as pd
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
+from df_and_order.df_transform import DfTransformConfig
 from df_and_order.df_config import DfConfig
 from df_and_order.df_cache import DfCache
-from df_and_order.df_transform import DfTransformConfig, DfTransform
+from df_and_order.df_transform_step import DfTransformStepConfig, DfTransformStep
 
 
 class DfReader:
@@ -32,42 +33,42 @@ class DfReader:
                               initial_dataset_format: str,
                               transformed_dataset_format: str,
                               metadata: Optional[dict] = None,
-                              transform_config: Optional[DfTransformConfig] = None):
+                              transform: Optional[DfTransformConfig] = None):
         DfConfig.create_config(dir_path=self._dataset_dir_path(dataset_id=dataset_id),
                                dataset_id=dataset_id,
                                initial_dataset_format=initial_dataset_format,
                                transformed_dataset_format=transformed_dataset_format,
                                metadata=metadata,
-                               transform_config=transform_config)
+                               transform=transform)
 
     def register_transform(self,
                            dataset_id: str,
-                           transform_config: DfTransformConfig):
+                           transform: DfTransformConfig):
         dataset_config = self._get_config(dataset_id=dataset_id)
         filename = self.dataset_filename(dataset_config=dataset_config,
                                          dataset_id=dataset_id,
-                                         transform_id=transform_config.transform_id)
-        dataset_config.register_transform(transform_config=transform_config,
+                                         transform_id=transform.transform_id)
+        dataset_config.register_transform(transform=transform,
                                           filename=filename)
 
     def read(self,
              dataset_id: str,
              transform_id: Optional[str] = None,
-             transform_config: Optional[DfTransformConfig] = None) -> pd.DataFrame:
-        if transform_id and transform_config:
+             transform: Optional[DfTransformConfig] = None) -> pd.DataFrame:
+        if transform_id and transform:
             raise AttributeError('Provide either transform_id or transform_config')
 
-        if transform_config:
-            transform_id = transform_config.transform_id
+        if transform:
+            transform_id = transform.transform_id
 
         dataset_config = self._get_config(dataset_id=dataset_id)
 
         if transform_id:
-            if not transform_config:
-                transform_config = dataset_config.transform_config_by(transform_id=transform_id)
+            if not transform:
+                transform = dataset_config.transforms_by(transform_id=transform_id)
 
             return self._read_transformed(dataset_id=dataset_id,
-                                          transform_config=transform_config,
+                                          transform=transform,
                                           dataset_config=dataset_config)
         else:
             return self._read_initial(dataset_id=dataset_id,
@@ -82,33 +83,52 @@ class DfReader:
 
     def _read_transformed(self,
                           dataset_id: str,
-                          transform_config: DfTransformConfig,
+                          transform: DfTransformConfig,
                           dataset_config: DfConfig) -> pd.DataFrame:
-        transform_id = transform_config.transform_id
+        transform_id = transform.transform_id
         transformed_dataset_exists = self.dataset_exists(dataset_id=dataset_id,
                                                          transform_id=transform_id)
         dataset_format = dataset_config.transformed_dataset_format
         if transformed_dataset_exists:
-            return self._read_df(dataset_config=dataset_config,
-                                 dataset_id=dataset_id,
-                                 dataset_format=dataset_format,
-                                 transform_id=transform_id)
+            df = self._read_df(dataset_config=dataset_config,
+                               dataset_id=dataset_id,
+                               dataset_format=dataset_format,
+                               transform_id=transform_id)
+
+            if transform.in_memory_steps:
+                df = DfReader._apply_transform_steps(df=df,
+                                                     steps=transform.in_memory_steps)
+
+            return df
 
         self.register_transform(dataset_id=dataset_id,
-                                transform_config=transform_config)
+                                transform=transform)
 
-        initial_df = self._read_initial(dataset_id=dataset_id,
-                                        dataset_config=dataset_config)
+        df = self._read_initial(dataset_id=dataset_id,
+                                dataset_config=dataset_config)
 
-        transform = DfTransform.build_transform(config=transform_config)
-        df = transform.transform(df=initial_df)
+        if transform.in_memory_steps:
+            df = DfReader._apply_transform_steps(df=df,
+                                                 steps=transform.in_memory_steps)
 
-        if transform.needs_cache:
+        if transform.permanent_steps:
+            df = DfReader._apply_transform_steps(df=df,
+                                                 steps=transform.permanent_steps)
+
             df_path = self._df_path(dataset_config=dataset_config,
                                     dataset_id=dataset_id,
                                     transform_id=transform_id)
             df_cache = self._get_df_cache(dataset_format=dataset_format)
             df_cache.save(df=df, path=df_path)
+
+        return df
+
+    @staticmethod
+    def _apply_transform_steps(df: pd.DataFrame,
+                               steps: List[DfTransformStepConfig]) -> pd.DataFrame:
+        for step in steps:
+            transform = DfTransformStep.build_transform(config=step)
+            df = transform.transform(df=df)
 
         return df
 
