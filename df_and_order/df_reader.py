@@ -6,6 +6,7 @@ from df_and_order.df_transform import DfTransformConfig
 from df_and_order.df_config import DfConfig
 from df_and_order.df_cache import DfCache
 from df_and_order.df_transform_step import DfTransformStepConfig, DfTransformStep
+from df_and_order.helpers import FileInspector
 
 
 class DfReader:
@@ -57,6 +58,16 @@ class DfReader:
                                 df_id=df_id,
                                 transform_id=transform_id)
         return DfReader._is_file_exists(path=df_path)
+
+    def _df_last_modified_ts(self,
+                             df_id: str,
+                             transform_id: Optional[str] = None) -> float:
+        df_config = self._get_config(df_id=df_id)
+        df_path = self._df_path(df_config=df_config,
+                                df_id=df_id,
+                                transform_id=transform_id)
+        result = FileInspector.last_modified_date(file_path=df_path)
+        return result
 
     @staticmethod
     def _is_file_exists(path: str):
@@ -154,6 +165,19 @@ class DfReader:
                                                transform_id=transform_id)
         df_format = df_config.transformed_df_format
         if transformed_df_exists:
+            if transform.permanent_steps:
+                # if one code of one of the steps was modified since the transformed dataframe
+                # was cached - we need to warn a user about the need to regenerate it
+                steps_last_modified_tss = [step.step_last_modified_ts() for step in transform.permanent_steps]
+                df_last_modified_date = self._df_last_modified_ts(df_id=df_id,
+                                                                  transform_id=transform_id)
+                outdated_steps = list(filter(lambda step: step.step_last_modified_ts() > df_last_modified_date, transform.permanent_steps))
+
+                if len(outdated_steps) > 0:
+                    steps_module_paths = [step.module_path for step in outdated_steps]
+                    raise Exception(f'{steps_module_paths} steps was changed since the df was generated, '
+                                    'delete the old file and try again to regenerate the df')
+
             df = self._read_df(df_config=df_config,
                                df_id=df_id,
                                df_format=df_format,
