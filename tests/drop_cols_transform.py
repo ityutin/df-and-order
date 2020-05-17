@@ -1,10 +1,11 @@
 from typing import List
+
 import pandas as pd
 
 from df_and_order.df_transform_step import DfTransformStep
 
 
-class DropColsTransformStep(DfTransformStep):
+class TestDropColsTransformStep(DfTransformStep):
     """
     Simply drops some undesired columns from a dataframe.
     """

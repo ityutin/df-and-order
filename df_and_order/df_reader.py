@@ -6,7 +6,7 @@ from df_and_order.df_transform import DfTransformConfig
 from df_and_order.df_config import DfConfig
 from df_and_order.df_cache import DfCache
 from df_and_order.df_transform_step import DfTransformStepConfig, DfTransformStep
-from df_and_order.helpers import FileInspector
+from df_and_order.helpers import FileInspector, get_type_from_module_path
 
 
 class DfReader:
@@ -168,10 +168,16 @@ class DfReader:
             if transform.permanent_steps:
                 # if one code of one of the steps was modified since the transformed dataframe
                 # was cached - we need to warn a user about the need to regenerate it
-                steps_last_modified_tss = [step.step_last_modified_ts() for step in transform.permanent_steps]
                 df_last_modified_date = self._df_last_modified_ts(df_id=df_id,
                                                                   transform_id=transform_id)
-                outdated_steps = list(filter(lambda step: step.step_last_modified_ts() > df_last_modified_date, transform.permanent_steps))
+
+                def _filter_func(step_config: DfTransformStepConfig):
+                    step_class = get_type_from_module_path(module_path=step_config.module_path)
+                    last_modified_ts = step_class.step_last_modified_ts(step_config=step_config)
+                    result = last_modified_ts > df_last_modified_date
+                    return result
+
+                outdated_steps = list(filter(_filter_func, transform.permanent_steps))
 
                 if len(outdated_steps) > 0:
                     steps_module_paths = [step.module_path for step in outdated_steps]

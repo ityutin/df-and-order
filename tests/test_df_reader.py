@@ -171,15 +171,15 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
     permanent_steps = []
     if permanent:
         permanent_steps = [
-            DfTransformStepConfig(module_path='df_and_order.steps.drop_cols.DropColsTransformStep',
+            DfTransformStepConfig(module_path='tests.drop_cols_transform.TestDropColsTransformStep',
                                   params={'cols_to_drop': ['b']}),
         ]
 
     transform = DfTransformConfig(transform_id='transform_id',
                                   in_memory_steps=[
-                                    DfTransformStepConfig(module_path='tests.test_transforms.ZeroTransformStep',
+                                    DfTransformStepConfig(module_path='tests.zero_transform.TestZeroTransformStep',
                                                           params={'zero_cols': ['a']}),
-                                    DfTransformStepConfig(module_path='tests.test_transforms.DatesTransformStep',
+                                    DfTransformStepConfig(module_path='tests.dates_transform.TestDatesTransformStep',
                                                           params={'dates_cols': ['c']})
                                   ],
                                   permanent_steps=permanent_steps)
@@ -237,9 +237,9 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
 @pytest.mark.parametrize("is_df_outdated", [True, False], ids=['outdated', 'not_outdated'])
 def test_read_transformed_check_ts(mocker, df_id, test_path, initial_df, is_df_outdated):
     # if not from scratch we need to stub cached df
-    zero_module_path = 'tests.test_transforms.ZeroTransformStep'
+    zero_module_path = 'tests.zero_transform.TestZeroTransformStep'
     zero_last_modified_ts = 1.0
-    drop_module_path = 'df_and_order.steps.drop_cols.DropColsTransformStep'
+    drop_module_path = 'tests.drop_cols_transform.TestDropColsTransformStep'
     drop_last_modified_ts = 2.0
     if is_df_outdated:
         df_last_modified_ts = min(zero_last_modified_ts, drop_last_modified_ts) - 1.0
@@ -284,9 +284,9 @@ def test_read_transformed_check_ts(mocker, df_id, test_path, initial_df, is_df_o
     })
 
     def last_modified_date(file_path: str):
-        if 'test_transforms' in file_path:
+        if 'zero_transform' in file_path:
             return zero_last_modified_ts
-        elif 'df_and_order' in file_path:
+        elif 'drop_cols_transform' in file_path:
             return drop_last_modified_ts
         else:
             raise ValueError('???')
