@@ -87,7 +87,7 @@ class FileInspector:
     @staticmethod
     def last_modified_date(file_path: str) -> float:
         """
-        Returns last modification date unix timestamp for a file at the given path
+        Returns the last modification date unix timestamp for a file at the given path
 
         Parameters
         ----------

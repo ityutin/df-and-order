@@ -191,11 +191,11 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
                           test_path=test_path,
                           initial_format=init_format,
                           transformed_format=transformed_format)
-    # do nothing when it comes to save config
+    # do nothing when it comes to save the config
     mocker.patch.object(DfConfig, DfConfig._save.__name__)
-    # override config getter
+    # override the config getter
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
-    # just overriding it for test environment
+    # just overriding it for the test environment
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
 
     df_dir_path = _df_dir_path(dir_path=test_path, df_id=df_id)
