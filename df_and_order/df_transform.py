@@ -111,12 +111,12 @@ class DfTransformConfig:
         -------
         Optional list of DfTransformStepConfig objects.
         """
-        transform_dicts = transform_dict.get(key)
-        transforms = None
-        if transform_dicts:
-            transforms = [
-                DfTransformStepConfig.from_dict(transform_dict=transform_dict)
-                for transform_dict in transform_dicts
+        step_dicts = transform_dict.get(key)
+        steps = None
+        if step_dicts:
+            steps = [
+                DfTransformStepConfig.from_dict(step_dict=step_dict)
+                for step_dict in step_dicts
             ]
 
-        return transforms
+        return steps

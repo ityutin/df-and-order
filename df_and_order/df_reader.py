@@ -56,7 +56,11 @@ class DfReader:
         df_path = self._df_path(df_config=df_config,
                                 df_id=df_id,
                                 transform_id=transform_id)
-        return os.path.exists(path=df_path)
+        return DfReader._is_file_exists(path=df_path)
+
+    @staticmethod
+    def _is_file_exists(path: str):
+        return os.path.exists(path=path)
 
     def create_df_config(self,
                          df_id: str,

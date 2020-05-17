@@ -4,6 +4,8 @@ import yaml
 
 from df_and_order.df_transform import DfTransformConfig
 
+CONFIG_FILENAME = 'df_config.yaml'
+
 DF_ID_KEY = 'df_id'
 DF_INITIAL_FORMAT_KEY = 'initial_df_format'
 DF_TRANSFORMED_FORMAT_KEY = 'transformed_df_format'
@@ -24,8 +26,7 @@ class DfConfig:
     """
     def __init__(self, df_id: str, dir_path: str):
         self._dir_path = dir_path
-        with open(self._config_path()) as config_file:
-            config_dict = yaml.safe_load(config_file)
+        config_dict = self._read_config(path=self._config_path())
 
         df_check = config_dict[DF_ID_KEY] == df_id
         assert df_check, "config_dict doesn't belong to requested dataframe"
@@ -47,7 +48,18 @@ class DfConfig:
         True if config file exists, False otherwise
         """
         path_to_check = DfConfig._config_path_for(dir_path=dir_path)
-        return os.path.exists(path_to_check)
+        return DfConfig._is_file_exists(path=path_to_check)
+
+    @staticmethod
+    def _read_config(path: str) -> dict:
+        with open(path) as config_file:
+            config_dict = yaml.safe_load(config_file)
+
+        return config_dict
+
+    @staticmethod
+    def _is_file_exists(path: str) -> bool:
+        return os.path.exists(path)
 
     def _config_path(self) -> str:
         """
@@ -60,7 +72,8 @@ class DfConfig:
         """
         Gets a path to the config using the given dir_path
         """
-        return DfConfig._path_for_file(dir_path=dir_path, filename='df_config.yaml')
+        return DfConfig._path_for_file(dir_path=dir_path,
+                                       filename=CONFIG_FILENAME)
 
     @staticmethod
     def _path_for_file(dir_path: str, filename: str) -> str:
@@ -96,7 +109,8 @@ class DfConfig:
         -------
         Nothing, but creates the config in the filesystem.
         """
-        assert not DfConfig.config_exists(dir_path=dir_path), f"Config for df {df_id} already exists"
+        if DfConfig.config_exists(dir_path=dir_path):
+            raise Exception(f"Config for df {df_id} already exists")
 
         config_path = DfConfig._config_path_for(dir_path=dir_path)
         config_dict = {
@@ -116,6 +130,10 @@ class DfConfig:
 
         DfConfig._save_at_path(config_dict=config_dict,
                                config_path=config_path)
+
+    @property
+    def df_id(self) -> str:
+        return self._config_dict[DF_ID_KEY]
 
     @property
     def initial_df_format(self) -> str:
@@ -167,8 +185,11 @@ class DfConfig:
         transform_id, transform_dict = transform.to_dict()
         maybe_transforms = self._config_dict.get(TRANSFORMS_KEY, {})
         if maybe_transforms and maybe_transforms.get(transform_id):
-            full_filename = f'{filename}.{self._config_dict[DF_TRANSFORMED_FORMAT_KEY]}'
-            already_cached = os.path.exists(self._path_for_file(dir_path=self._dir_path, filename=full_filename))
+            file_format = self._config_dict[DF_TRANSFORMED_FORMAT_KEY]
+            full_filename = f'{filename}.{file_format}'
+            path_to_cached_file = self._path_for_file(dir_path=self._dir_path,
+                                                      filename=full_filename)
+            already_cached = DfConfig._is_file_exists(path=path_to_cached_file)
             assert not already_cached, f"Result of the transform {transform_id} already exists."
 
         maybe_transforms[transform_id] = transform_dict

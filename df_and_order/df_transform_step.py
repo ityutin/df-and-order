@@ -7,7 +7,6 @@ from df_and_order.helpers import build_class_instance
 
 TRANSFORM_STEP_MODULE_PATH_KEY = 'module_path'
 TRANSFORM_STEP_PARAMS_KEY = 'params'
-TRANSFORM_STEP_NEED_CACHE_KEY = 'needs_cache'
 
 
 @dataclass
@@ -20,9 +19,9 @@ class DfTransformStepConfig:
     params: dict
 
     @staticmethod
-    def from_dict(transform_dict: dict):
-        module_path = transform_dict[TRANSFORM_STEP_MODULE_PATH_KEY]
-        params = transform_dict.get(TRANSFORM_STEP_PARAMS_KEY) or {}
+    def from_dict(step_dict: dict):
+        module_path = step_dict[TRANSFORM_STEP_MODULE_PATH_KEY]
+        params = step_dict.get(TRANSFORM_STEP_PARAMS_KEY) or {}
         config = DfTransformStepConfig(module_path=module_path,
                                        params=params)
         return config
