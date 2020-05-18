@@ -11,7 +11,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name="df-and-order",
     version="0.1.1",
-    description="Read and transform your datasets in convenient and predictable manner.",
+    description="Using df-and-order your interactions with dataframes become very clean and predictable.",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/ityutin/df-and-order",
