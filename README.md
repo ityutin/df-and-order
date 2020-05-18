@@ -52,8 +52,7 @@ transforms:
 
 Just by looking at the config you can say how the transformed dataframe was created.
 
-Take a look at the more detailed overview:
-https://github.com/ityutin/df-and-order/blob/master/examples/How-To.ipynb
+[Take a look at the more detailed overview to find more exciting stuff.](https://github.com/ityutin/df-and-order/blob/master/examples/How-To.ipynb)
 
 Hope the lib will help somebody to boost the productivity.
 
