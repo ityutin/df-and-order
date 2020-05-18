@@ -52,7 +52,12 @@ transforms:
 
 Just by looking at the config you can say how the transformed dataframe was created.
 
-Unit-tested!
+Take a look at the more detailed overview:
+https://github.com/ityutin/df-and-order/blob/master/examples/How-To.ipynb
+
+Hope the lib will help somebody to boost the productivity.
+
+Unit-tested, btw!
 
 ### Requirements
 ```
