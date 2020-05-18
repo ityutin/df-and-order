@@ -7,7 +7,7 @@ pip install df_and_order
 
 Using **df-and-order** your interactions with dataframes become very clean and predictable.
 
-- Tired of absolute file paths in the shared notebooks in your repository?
+- Tired of absolute file paths in shared notebooks in your repository?
 - Can't remember how your dataframes were generated?
 - Want to have a reproducibility on data transformations?
 - Like declarative config-based solutions?
