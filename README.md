@@ -25,7 +25,7 @@ Maybe you are interested in some transformed version of that dataframe? No probl
 
 ```python
 reader = MagicDfReader()
-# ready to fit model on!
+# ready to fit a model on!
 model_input_df = reader.read(df_id='user_activity_may_2020', transform_id='model_input')
 ```
 
