@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import os
 from typing import Optional, Tuple
 
@@ -81,6 +82,23 @@ def get_file_path_from_module_path(module_path: str) -> str:
     module = importlib.import_module(module_name)
     file_path = module.__file__
     return file_path
+
+
+def get_module_path_from_type(py_type) -> str:
+    """
+    Gets full module path + class name by the given class type
+
+    Parameters
+    ----------
+    cls: python type
+        Class you want to get full module path for
+
+    Returns
+    -------
+    String representation of full module path like module1.submodule2.ClassName
+    """
+    result = inspect.getmodule(py_type).__name__ + '.' + py_type.__name__
+    return result
 
 
 class FileInspector:

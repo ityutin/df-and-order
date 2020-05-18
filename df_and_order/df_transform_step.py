@@ -2,7 +2,8 @@ import pandas as pd
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-from df_and_order.helpers import build_class_instance, get_file_path_from_module_path, FileInspector
+from df_and_order.helpers import build_class_instance, get_file_path_from_module_path, FileInspector, \
+    get_module_path_from_type
 
 TRANSFORM_STEP_MODULE_PATH_KEY = 'module_path'
 TRANSFORM_STEP_PARAMS_KEY = 'params'
@@ -11,19 +12,27 @@ TRANSFORM_STEP_PARAMS_KEY = 'params'
 @dataclass
 class DfTransformStepConfig:
     """
-    Dataclass for storing module path of some DfTransformStep
+    Stores module path of some DfTransformStep
     as well as its init parameters.
     """
     module_path: str
     params: dict
 
     @staticmethod
+    def from_step_type(step_type, params: dict):
+        module_path = get_module_path_from_type(py_type=step_type)
+        step_config = DfTransformStepConfig(module_path=module_path,
+                                            params=params)
+        return step_config
+
+    @staticmethod
     def from_dict(step_dict: dict):
         module_path = step_dict[TRANSFORM_STEP_MODULE_PATH_KEY]
         params = step_dict.get(TRANSFORM_STEP_PARAMS_KEY) or {}
-        config = DfTransformStepConfig(module_path=module_path,
+
+        step_config = DfTransformStepConfig(module_path=module_path,
                                        params=params)
-        return config
+        return step_config
 
     def to_dict(self) -> dict:
         step_dict = {

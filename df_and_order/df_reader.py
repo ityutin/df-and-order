@@ -235,8 +235,8 @@ class DfReader:
         -------
         pd.DataFrame, fully transformed initial dataframe
         """
-        for step in steps:
-            transform = DfTransformStep.build_transform(config=step)
+        transform_steps = [DfTransformStep.build_transform(config=step_config) for step_config in steps]
+        for transform in transform_steps:
             df = transform.transform(df=df)
 
         return df
