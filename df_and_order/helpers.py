@@ -1,5 +1,6 @@
 import importlib
-from typing import Optional
+import os
+from typing import Optional, Tuple
 
 
 def build_class_instance(module_path: str, init_params: Optional[dict] = None):
@@ -36,10 +37,66 @@ def get_type_from_module_path(module_path: str):
     -------
     Python type.
     """
-    components = module_path.split('.')
-    class_name = components[-1]
-    module_name = '.'.join(components[:-1])
+    module_name, class_name = split_module_path(module_path=module_path)
 
     module = importlib.import_module(module_name)
     class_type = getattr(module, class_name)
     return class_type
+
+
+def split_module_path(module_path: str) -> Tuple[str, str]:
+    """
+    Splits module_path strings into a module name and a class name
+
+    Parameters
+    ----------
+    module_path: str
+        Full module_path that is valid for your project or some external package.
+
+    Returns
+    -------
+    Tuple of strings, one for the module name, second for the class name
+    """
+    components = module_path.split('.')
+    class_name = components[-1]
+    module_name = '.'.join(components[:-1])
+
+    return module_name, class_name
+
+
+def get_file_path_from_module_path(module_path: str) -> str:
+    """
+    Returns absolute file path given the module path
+
+    Parameters
+    ----------
+    module_path: str
+        Full module_path that is valid for your project or some external package.
+
+    Returns
+    -------
+    Absolute file path for module path
+    """
+    module_name, _ = split_module_path(module_path=module_path)
+    module = importlib.import_module(module_name)
+    file_path = module.__file__
+    return file_path
+
+
+class FileInspector:
+    @staticmethod
+    def last_modified_date(file_path: str) -> float:
+        """
+        Returns the last modification date unix timestamp for a file at the given path
+
+        Parameters
+        ----------
+        file_path: str
+            Absolute path for any file
+
+        Returns
+        -------
+        Unix timestamp of the file's last modification date
+        """
+        result = os.path.getmtime(file_path)
+        return result

@@ -5,6 +5,7 @@ from df_and_order.df_config import DfConfig, DF_ID_KEY, DF_INITIAL_FORMAT_KEY, D
 from df_and_order.df_reader import DfReader
 from df_and_order.df_transform import DfTransformConfig
 from df_and_order.df_transform_step import DfTransformStepConfig, DfTransformStep
+from df_and_order.helpers import FileInspector
 from tests.test_df_cache import TestDfCache
 from tests.test_df_config import _get_config
 
@@ -170,15 +171,15 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
     permanent_steps = []
     if permanent:
         permanent_steps = [
-            DfTransformStepConfig(module_path='df_and_order.steps.DropColsTransformStep',
+            DfTransformStepConfig(module_path='tests.drop_cols_transform.TestDropColsTransformStep',
                                   params={'cols_to_drop': ['b']}),
         ]
 
     transform = DfTransformConfig(transform_id='transform_id',
                                   in_memory_steps=[
-                                    DfTransformStepConfig(module_path='tests.test_transforms.ZeroTransformStep',
+                                    DfTransformStepConfig(module_path='tests.zero_transform.TestZeroTransformStep',
                                                           params={'zero_cols': ['a']}),
-                                    DfTransformStepConfig(module_path='tests.test_transforms.DatesTransformStep',
+                                    DfTransformStepConfig(module_path='tests.dates_transform.TestDatesTransformStep',
                                                           params={'dates_cols': ['c']})
                                   ],
                                   permanent_steps=permanent_steps)
@@ -190,10 +191,12 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
                           test_path=test_path,
                           initial_format=init_format,
                           transformed_format=transformed_format)
-    # do nothing when it comes to save config
+    # do nothing when it comes to save the config
     mocker.patch.object(DfConfig, DfConfig._save.__name__)
-    # override config getter
+    # override the config getter
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
+    # just overriding it for the test environment
+    mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
 
     df_dir_path = _df_dir_path(dir_path=test_path, df_id=df_id)
 
@@ -229,6 +232,73 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
         df_path = f'{df_dir_path}/{transform.transform_id}_{df_id}.{config.transformed_df_format}'
         trans_save_mock.assert_called_with(df=transformed_df,
                                            path=df_path)
+
+
+@pytest.mark.parametrize("is_df_outdated", [True, False], ids=['outdated', 'not_outdated'])
+def test_read_transformed_check_ts(mocker, df_id, test_path, initial_df, is_df_outdated):
+    # if not from scratch we need to stub cached df
+    zero_module_path = 'tests.zero_transform.TestZeroTransformStep'
+    zero_last_modified_ts = 1.0
+    drop_module_path = 'tests.drop_cols_transform.TestDropColsTransformStep'
+    drop_last_modified_ts = 2.0
+    if is_df_outdated:
+        df_last_modified_ts = min(zero_last_modified_ts, drop_last_modified_ts) - 1.0
+    else:
+        df_last_modified_ts = max(zero_last_modified_ts, drop_last_modified_ts) + 1.0
+
+    mocker.patch.object(DfReader,
+                        DfReader.df_exists.__name__,
+                        lambda _, df_id, transform_id: True)
+    mocker.patch.object(DfReader,
+                        DfReader._df_last_modified_ts.__name__,
+                        lambda _, df_id, transform_id: df_last_modified_ts)
+
+    transformed_format = 'transformed_format'
+    config = build_config(mocker=mocker,
+                          df_id=df_id,
+                          test_path=test_path,
+                          initial_format='init_format',
+                          transformed_format=transformed_format)
+    # do nothing when it comes to save config
+    mocker.patch.object(DfConfig, DfConfig._save.__name__)
+    # override config getter
+    mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
+
+    permanent_steps = [
+        DfTransformStepConfig(module_path=zero_module_path,
+                              params={'zero_cols': ['a']}),
+        DfTransformStepConfig(module_path=drop_module_path,
+                              params={'cols_to_drop': ['b']}),
+    ]
+
+    transform = DfTransformConfig(transform_id='transform_id',
+                                  in_memory_steps=[],
+                                  permanent_steps=permanent_steps)
+
+    trans_cache = TestDfCache()
+    trans_load_mock = mocker.patch.object(trans_cache, trans_cache.load.__name__)
+    trans_df = mocker.Mock()
+    trans_load_mock.return_value = trans_df
+    reader = DfReader(dir_path=test_path, format_to_cache_map={
+        transformed_format: trans_cache
+    })
+
+    def last_modified_date(file_path: str):
+        if 'zero_transform' in file_path:
+            return zero_last_modified_ts
+        elif 'drop_cols_transform' in file_path:
+            return drop_last_modified_ts
+        else:
+            raise ValueError('???')
+
+    mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, last_modified_date)
+
+    if is_df_outdated:
+        with pytest.raises(Exception):
+            reader.read(df_id=df_id, transform=transform)
+    else:
+        res_trans_df = reader.read(df_id=df_id, transform=transform)
+        assert res_trans_df == trans_df
 
 
 def _df_dir_path(dir_path: str, df_id: str) -> str:

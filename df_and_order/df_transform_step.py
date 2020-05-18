@@ -2,8 +2,7 @@ import pandas as pd
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-from df_and_order.helpers import build_class_instance
-
+from df_and_order.helpers import build_class_instance, get_file_path_from_module_path, FileInspector
 
 TRANSFORM_STEP_MODULE_PATH_KEY = 'module_path'
 TRANSFORM_STEP_PARAMS_KEY = 'params'
@@ -43,6 +42,12 @@ class DfTransformStep(ABC):
     Every subclass must implement 'transform' method with
     custom logic.
     """
+    @staticmethod
+    def step_last_modified_ts(step_config: DfTransformStepConfig) -> float:
+        file_path = get_file_path_from_module_path(module_path=step_config.module_path)
+        result = FileInspector.last_modified_date(file_path=file_path)
+        return result
+
     @staticmethod
     def build_transform(config: DfTransformStepConfig):
         """
