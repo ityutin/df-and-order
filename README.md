@@ -54,6 +54,8 @@ Just by looking at the config you can say how the transformed dataframe was crea
 
 [Take a look at the more detailed overview to find more exciting stuff.](https://github.com/ityutin/df-and-order/blob/master/examples/How-To.ipynb)
 
+[I also wrote an article to describe the benefits, check it out! There are lemurs and stuff.](https://medium.com/@emmarrgghh/imagine-theres-no-mess-in-your-data-folder-859135bd1262)
+
 Hope the lib will help somebody to boost the productivity.
 
 Unit-tested, btw!
