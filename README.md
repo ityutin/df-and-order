@@ -1,3 +1,5 @@
+[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-360/) [![CodeFactor](https://www.codefactor.io/repository/github/ityutin/df-and-order/badge)](https://www.codefactor.io/repository/github/ityutin/df-and-order) [![Maintainability](https://api.codeclimate.com/v1/badges/74ec941e646253e9e7ac/maintainability)](https://codeclimate.com/github/ityutin/df-and-order/maintainability) [![codecov](https://codecov.io/gh/ityutin/df-and-order/branch/master/graph/badge.svg)](https://codecov.io/gh/ityutin/df-and-order)
+
 # 🗄️ df-and-order 
 # Yeah, it's just like Law & Order, but Dataframe & Order!
 
