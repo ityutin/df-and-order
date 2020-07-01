@@ -1,7 +1,6 @@
 import pytest
 import copy
-from df_and_order.df_config import DfConfig, DF_ID_KEY, CONFIG_FILENAME, DF_INITIAL_FORMAT_KEY, \
-    DF_TRANSFORMED_FORMAT_KEY, METADATA_KEY, TRANSFORMS_KEY
+from df_and_order.df_config import DfConfig, DF_ID_KEY, CONFIG_FILENAME, DF_INITIAL_FORMAT_KEY, METADATA_KEY, TRANSFORMS_KEY
 from df_and_order.df_transform import DfTransformConfig
 from df_and_order.df_transform_step import DfTransformStepConfig
 
@@ -16,9 +15,15 @@ def test_path():
     return 'path/to/config/'
 
 
+@pytest.fixture
+def transformed_format():
+    return 'trans_format'
+
+
 @pytest.fixture()
-def transform():
+def transform(transformed_format):
     transform = DfTransformConfig(transform_id='transform_id',
+                                  df_format=transformed_format,
                                   in_memory_steps=[
                                     DfTransformStepConfig(module_path='123', params={'a': 1, 'b': 'b'})
                                   ],
@@ -46,9 +51,6 @@ def test_config_exists(mocker, df_id, test_path):
     mocker.patch.object(DfConfig, DfConfig._is_file_exists.__name__, lambda path: path == config_path)
     assert DfConfig.config_exists(dir_path=test_path)
 
-# def test_config_path(test_path):
-#     config_path = DfConfig._config_path
-
 
 def test_create_config_when_existing(mocker, df_id, test_path):
     mocker.patch.object(DfConfig, DfConfig.config_exists.__name__, lambda dir_path: True)
@@ -57,8 +59,7 @@ def test_create_config_when_existing(mocker, df_id, test_path):
     with pytest.raises(Exception):
         DfConfig.create_config(dir_path=test_path,
                                df_id=df_id,
-                               initial_df_format='',
-                               transformed_df_format='')
+                               initial_df_format='')
 
     save_mock.assert_not_called()
 
@@ -67,21 +68,18 @@ def test_create_config_when_existing(mocker, df_id, test_path):
 @pytest.mark.parametrize("use_transform", [True, False], ids=['transform', 'no_transform'])
 def test_create_config(mocker, df_id, test_path, transform, metadata, use_transform):
     initial_df_format = 'init_format'
-    transformed_df_format = 'trans_format'
 
     save_mock = mocker.patch.object(DfConfig, DfConfig._save_at_path.__name__)
 
     DfConfig.create_config(dir_path=test_path,
                            df_id=df_id,
                            initial_df_format=initial_df_format,
-                           transformed_df_format=transformed_df_format,
                            metadata=metadata,
                            transform=transform if use_transform else None)
 
     config_dict = {
         DF_ID_KEY: df_id,
         DF_INITIAL_FORMAT_KEY: initial_df_format,
-        DF_TRANSFORMED_FORMAT_KEY: transformed_df_format,
     }
 
     if metadata:
@@ -99,11 +97,9 @@ def test_create_config(mocker, df_id, test_path, transform, metadata, use_transf
 
 def test_properties(mocker, df_id, test_path):
     initial_df_format = 'init_format'
-    transformed_df_format = 'trans_format'
     config_dict = {
         DF_ID_KEY: df_id,
         DF_INITIAL_FORMAT_KEY: initial_df_format,
-        DF_TRANSFORMED_FORMAT_KEY: transformed_df_format,
     }
     config = _get_config(mocker=mocker,
                          df_id=df_id,
@@ -111,7 +107,6 @@ def test_properties(mocker, df_id, test_path):
                          config_dict=config_dict)
 
     assert config.initial_df_format == initial_df_format
-    assert config.transformed_df_format == transformed_df_format
     assert config.df_id == df_id
 
 
@@ -164,14 +159,12 @@ def test_transform_by(mocker, df_id, test_path, transform):
     assert transform_dict == transform_result_dict
 
 
-def test_register_transform_already_cached(mocker, df_id, test_path, transform):
+def test_register_transform_already_cached(mocker, df_id, test_path, transform, transformed_format):
     initial_df_format = 'init_format'
-    transformed_df_format = 'trans_format'
     transform_id, transform_dict = transform.to_dict()
     config_dict = {
         DF_ID_KEY: df_id,
         DF_INITIAL_FORMAT_KEY: initial_df_format,
-        DF_TRANSFORMED_FORMAT_KEY: transformed_df_format,
         TRANSFORMS_KEY: {
             transform_id: transform_dict
         }
@@ -182,7 +175,7 @@ def test_register_transform_already_cached(mocker, df_id, test_path, transform):
                          dir_path=test_path,
                          config_dict=config_dict)
 
-    test_path_to_cached_file = test_path + transfom_filename + f'.{transformed_df_format}'
+    test_path_to_cached_file = test_path + transfom_filename + f'.{transformed_format}'
     is_file_exists_mock = mocker.patch.object(DfConfig, DfConfig._is_file_exists.__name__)
     is_file_exists_mock.return_value = True
 
@@ -193,15 +186,13 @@ def test_register_transform_already_cached(mocker, df_id, test_path, transform):
     is_file_exists_mock.assert_called_with(path=test_path_to_cached_file)
 
 
-def test_register_transform(mocker, df_id, test_path, transform):
+def test_register_transform(mocker, df_id, test_path, transform, transformed_format):
     save_mock = mocker.patch.object(DfConfig, DfConfig._save_at_path.__name__)
     initial_df_format = 'init_format'
-    transformed_df_format = 'trans_format'
     transform_id, transform_dict = transform.to_dict()
     config_dict = {
         DF_ID_KEY: df_id,
         DF_INITIAL_FORMAT_KEY: initial_df_format,
-        DF_TRANSFORMED_FORMAT_KEY: transformed_df_format,
         TRANSFORMS_KEY: {
             transform_id: transform_dict
         }
@@ -212,6 +203,7 @@ def test_register_transform(mocker, df_id, test_path, transform):
                          config_dict=copy.deepcopy(config_dict))
 
     updated_transform = DfTransformConfig(transform_id=transform_id,
+                                          df_format=transformed_format,
                                           in_memory_steps=[
                                               DfTransformStepConfig(module_path='razdva', params={'asd': 123})
                                           ])

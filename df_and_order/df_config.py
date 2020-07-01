@@ -8,7 +8,6 @@ CONFIG_FILENAME = 'df_config.yaml'
 
 DF_ID_KEY = 'df_id'
 DF_INITIAL_FORMAT_KEY = 'initial_df_format'
-DF_TRANSFORMED_FORMAT_KEY = 'transformed_df_format'
 METADATA_KEY = 'metadata'
 TRANSFORMS_KEY = 'transforms'
 
@@ -83,7 +82,6 @@ class DfConfig:
     def create_config(dir_path: str,
                       df_id: str,
                       initial_df_format: str,
-                      transformed_df_format: str,
                       metadata: Optional[dict] = None,
                       transform: Optional[DfTransformConfig] = None):
         """
@@ -97,9 +95,6 @@ class DfConfig:
             Unique identifier of your dataframe.
         initial_df_format: str
             Format extension for an initial dataframe before any transformation.
-        transformed_df_format: str
-            # TODO: let a transformation decide in which format to save a dataframe
-            Format extension for a transformed dataframe.
         metadata: optional dict
             Any information you want to store in the config file as a reference or for future use.
         transform: DfTransformConfig
@@ -116,7 +111,6 @@ class DfConfig:
         config_dict = {
             DF_ID_KEY: df_id,
             DF_INITIAL_FORMAT_KEY: initial_df_format,
-            DF_TRANSFORMED_FORMAT_KEY: transformed_df_format,
         }
 
         if metadata:
@@ -138,10 +132,6 @@ class DfConfig:
     @property
     def initial_df_format(self) -> str:
         return self._config_dict[DF_INITIAL_FORMAT_KEY]
-
-    @property
-    def transformed_df_format(self) -> str:
-        return self._config_dict[DF_TRANSFORMED_FORMAT_KEY]
 
     def transforms_by(self, transform_id: str) -> DfTransformConfig:
         """
@@ -185,7 +175,7 @@ class DfConfig:
         transform_id, transform_dict = transform.to_dict()
         maybe_transforms = self._config_dict.get(TRANSFORMS_KEY, {})
         if maybe_transforms and maybe_transforms.get(transform_id):
-            file_format = self._config_dict[DF_TRANSFORMED_FORMAT_KEY]
+            file_format = transform.df_format
             full_filename = f'{filename}.{file_format}'
             path_to_cached_file = self._path_for_file(dir_path=self._dir_path,
                                                       filename=full_filename)

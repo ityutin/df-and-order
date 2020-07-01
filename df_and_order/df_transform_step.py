@@ -18,6 +18,15 @@ class DfTransformStepConfig:
     module_path: str
     params: dict
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DfTransformStepConfig):
+            return False
+
+        result = self.module_path == other.module_path \
+                 and self.params == other.params
+
+        return result
+
     @staticmethod
     def from_step_type(step_type, params: dict):
         module_path = get_module_path_from_type(py_type=step_type)
