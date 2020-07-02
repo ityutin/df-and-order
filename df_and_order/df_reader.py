@@ -91,12 +91,12 @@ class DfReader:
 
     def register_transform(self,
                            df_id: str,
+                           df_config: DfConfig,
                            transform: DfTransformConfig):
         """
         Forms a filename for the given dataframe and adds a new transform to the config file if possible.
         In general it's just a forwarding to DfConfig method, see docs in DfConfig.
         """
-        df_config = self._get_config(df_id=df_id)
         filename = self.df_filename(df_config=df_config,
                                     df_id=df_id,
                                     transform=transform)
@@ -131,14 +131,10 @@ class DfReader:
         if transform_id and transform:
             raise AttributeError('Provide either transform_id or transform_config')
 
-        if transform:
-            transform_id = transform.transform_id
-
         df_config = self._get_config(df_id=df_id)
         self._update_transforms_state(df_id=df_id)
 
-        if transform_id:
-
+        if transform_id or transform:
             if not transform:
                 transform = df_config.transforms_by(transform_id=transform_id)
 
@@ -170,6 +166,11 @@ class DfReader:
         Reads the transformed dataframe from the disk or creates it if needed.
         """
         transform_id = transform.transform_id
+
+        self.register_transform(df_id=df_id,
+                                df_config=df_config,
+                                transform=transform)
+
         transformed_df_exists = self.df_exists(df_id=df_id,
                                                transform_id=transform_id)
         if transformed_df_exists:
@@ -177,9 +178,6 @@ class DfReader:
                                                       df_config=df_config,
                                                       forced=forced,
                                                       transform=transform)
-
-        self.register_transform(df_id=df_id,
-                                transform=transform)
 
         df = self._read_source_df_for_transform(df_id=df_id,
                                                 df_config=df_config,

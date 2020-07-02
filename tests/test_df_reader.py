@@ -79,6 +79,7 @@ def test_df_exists(mocker, df_id, test_path, transform_id, valid_case, transform
         # do nothing when it comes to save the config
         mocker.patch.object(DfConfig, DfConfig._save.__name__)
         reader.register_transform(df_id=df_id,
+                                  df_config=config,
                                   transform=transform)
     if valid_case:
         assert reader.df_exists(df_id=df_id, transform_id=transform_id)
@@ -123,6 +124,7 @@ def test_register_transform(mocker, df_id, test_path, transformed_format):
 
     reader = DfReader(dir_path=test_path, format_to_cache_map={})
     reader.register_transform(df_id=df_id,
+                              df_config=config,
                               transform=transform)
 
     register_transform_mock.assert_called_with(transform=transform,
@@ -210,7 +212,7 @@ def test_read_transformed(mocker, df_id, test_path, permanent, from_scratch, ini
     mocker.patch.object(reader, reader._save_transforms_state_file.__name__)
     mocker.patch.object(reader, reader._try_validate_transform.__name__)
     #
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
     # override the config getter
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     # just overriding it for the test environment
@@ -306,7 +308,7 @@ def test_read_transformed_check_ts(mocker, df_id, test_path, initial_df, is_df_o
     mocker.patch.object(reader, reader._save_transforms_state_file.__name__)
     mocker.patch.object(reader, reader._try_validate_transform.__name__)
     #
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
 
     def last_modified_date(file_path: str):
         if 'zero_transform' in file_path:
@@ -425,7 +427,7 @@ def test_source_id(mocker, df_id, test_path, initial_df, transformed_format):
     mocker.patch.object(reader, reader._save_transforms_state_file.__name__)
     mocker.patch.object(reader, reader._try_validate_transform.__name__)
     #
-    reader.register_transform(df_id=df_id, transform=source_transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=source_transform)
     transformed_df = reader.read(df_id=df_id, transform=transform)
 
     assert transformed_df.select_dtypes(include=[np.datetime64]).columns[0] == 'c'
@@ -482,7 +484,7 @@ def test_permanent_transforms_state(mocker, df_id, test_path, valid_state, initi
     }
     mocker.patch.object(DfReader, DfReader._is_file_exists.__name__, lambda path: True)
     mocker.patch.object(reader, DfReader._transforms_state_dicts.__name__, lambda df_id: transform_state)
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
     mocker.patch.object(DfReader, DfReader.df_exists.__name__, lambda _, df_id, transform_id: True)
@@ -568,8 +570,8 @@ def test_permanent_source_transforms_state(mocker, df_id, test_path, valid_state
     transform_dict[TRANSFORM_STATE_SOURCE_KEY] = source_transform_dict
     mocker.patch.object(DfReader, DfReader._is_file_exists.__name__, lambda path: True)
     mocker.patch.object(reader, DfReader._transforms_state_dicts.__name__, lambda df_id: transform_state)
-    reader.register_transform(df_id=df_id, transform=transform)
-    reader.register_transform(df_id=df_id, transform=source_transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=source_transform)
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
     mocker.patch.object(DfReader, DfReader.df_exists.__name__, lambda _, df_id, transform_id: True)
@@ -627,7 +629,7 @@ def test_transforms_state_cleanup(mocker, df_id, test_path, df_exists, initial_d
         transform.transform_id: transform_dict,
     }
     mocker.patch.object(reader, DfReader._transforms_state_dicts.__name__, lambda df_id: transform_state)
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
 
@@ -686,8 +688,8 @@ def test_transforms_state_save(mocker, df_id, test_path, initial_df, transformed
         transform.transform_id: transform_dict,
     }
     mocker.patch.object(reader, DfReader._transforms_state_dicts.__name__, lambda df_id: {})
-    reader.register_transform(df_id=df_id, transform=transform)
-    reader.register_transform(df_id=df_id, transform=source_transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=source_transform)
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
 
@@ -734,7 +736,7 @@ def test_transforms_state_no_file(mocker, df_id, test_path, df_exists, initial_d
         transform.transform_id: transform_dict,
     }
     mocker.patch.object(reader, DfReader._transforms_state_dicts.__name__, lambda df_id: transform_state)
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
     mocker.patch.object(DfReader, DfReader._get_config.__name__, lambda _, df_id: config)
     mocker.patch.object(FileInspector, FileInspector.last_modified_date.__name__, lambda file_path: 1.0)
 
@@ -815,8 +817,8 @@ def test_transform_state_source_check_ts(mocker, df_id, test_path, initial_df, i
     # ignore states for this test
     mocker.patch.object(reader, reader._save_transforms_state_file.__name__)
     #
-    reader.register_transform(df_id=df_id, transform=source_transform)
-    reader.register_transform(df_id=df_id, transform=transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=source_transform)
+    reader.register_transform(df_id=df_id, df_config=config, transform=transform)
 
     def last_modified_date(file_path: str):
         if 'zero_transform' in file_path:
