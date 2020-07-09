@@ -9,6 +9,7 @@ class TestDropColsTransformStep(DfTransformStep):
     """
     Simply drops some undesired columns from a dataframe.
     """
+
     def __init__(self, cols_to_drop: List[str]):
         super().__init__()
 

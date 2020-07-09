@@ -30,8 +30,7 @@ class DfTransformState:
         return transform_id, result
 
     @staticmethod
-    def from_dict(transform_id: str,
-                  state_dict: dict):
+    def from_dict(transform_id: str, state_dict: dict):
         """
         Builds DfTransformState instance out of serialized dictionary.
 
@@ -53,12 +52,9 @@ class DfTransformState:
             del state_dict[TRANSFORM_STATE_SOURCE_KEY]
 
         transform_dict = state_dict
-        transform = DfTransformConfig.from_dict(transform_id=transform_id,
-                                                transform_dict=transform_dict)
+        transform = DfTransformConfig.from_dict(transform_id=transform_id, transform_dict=transform_dict)
 
         if source_dict:
-            source_transform = DfTransformConfig.from_dict(transform_id=transform.source_id,
-                                                           transform_dict=source_dict)
-        result = DfTransformState(transform=transform,
-                                  source_transform=source_transform)
+            source_transform = DfTransformConfig.from_dict(transform_id=transform.source_id, transform_dict=source_dict)
+        result = DfTransformState(transform=transform, source_transform=source_transform)
         return result

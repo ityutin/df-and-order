@@ -1,18 +1,19 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any, Dict
 
 from df_and_order.df_transform_step import DfTransformStepConfig
 
 
-TRANSFORM_ID_KEY = 'transform_id'
-TRANSFORM_DF_FORMAT_KEY = 'df_format'
-TRANSFORM_SOURCE_ID_KEY = 'source_id'
-TRANSFORM_SOURCE_IN_MEMORY_KEY = 'source_in_memory'
-TRANSFORM_IN_MEMORY_KEY = 'in_memory'
-TRANSFORM_PERMANENT_KEY = 'permanent'
+TRANSFORM_ID_KEY = "transform_id"
+TRANSFORM_DF_FORMAT_KEY = "df_format"
+TRANSFORM_SOURCE_ID_KEY = "source_id"
+TRANSFORM_SOURCE_IN_MEMORY_KEY = "source_in_memory"
+TRANSFORM_IN_MEMORY_KEY = "in_memory"
+TRANSFORM_PERMANENT_KEY = "permanent"
 
 
 class DfTransformConfig:
     """
+
     Describes how a transformation should be performed.
     For any transformation one or many steps can be used.
     Those steps can be performed in memory only or their result
@@ -37,14 +38,18 @@ class DfTransformConfig:
     permanent_steps: list of DfTransformStepConfig
         Those steps result of which is persisted on the disk for future access.
     """
-    def __init__(self,
-                 transform_id: str,
-                 df_format: Optional[str] = None,
-                 source_id: Optional[str] = None,
-                 source_in_memory_steps: Optional[List[DfTransformStepConfig]] = None,
-                 in_memory_steps: Optional[List[DfTransformStepConfig]] = None,
-                 permanent_steps: Optional[List[DfTransformStepConfig]] = None):
-        assert in_memory_steps or permanent_steps, "Provide at least one type of transformations"
+
+    def __init__(
+        self,
+        transform_id: str,
+        df_format: str,
+        source_id: Optional[str] = None,
+        source_in_memory_steps: Optional[List[DfTransformStepConfig]] = None,
+        in_memory_steps: Optional[List[DfTransformStepConfig]] = None,
+        permanent_steps: Optional[List[DfTransformStepConfig]] = None,
+    ):
+        if in_memory_steps is None and permanent_steps is None:
+            raise Exception("Provide at least one type of transformations")
 
         self._transform_id = transform_id
         self._df_format = df_format
@@ -57,12 +62,14 @@ class DfTransformConfig:
         if not isinstance(other, DfTransformConfig):
             return False
 
-        result = self.transform_id == other.transform_id \
-                 and self.df_format == other.df_format \
-                 and self.source_id == other.source_id \
-                 and self.source_in_memory_steps == other.source_in_memory_steps \
-                 and self.in_memory_steps == other.in_memory_steps \
-                 and self.permanent_steps == other.permanent_steps
+        result = (
+            self.transform_id == other.transform_id
+            and self.df_format == other.df_format
+            and self.source_id == other.source_id
+            and self.source_in_memory_steps == other.source_in_memory_steps
+            and self.in_memory_steps == other.in_memory_steps
+            and self.permanent_steps == other.permanent_steps
+        )
 
         return result
 
@@ -71,7 +78,7 @@ class DfTransformConfig:
         return self._transform_id
 
     @property
-    def df_format(self) -> Optional[str]:
+    def df_format(self) -> str:
         return self._df_format
 
     @property
@@ -79,15 +86,15 @@ class DfTransformConfig:
         return self._source_id
 
     @property
-    def source_in_memory_steps(self) -> Optional[List[DfTransformStepConfig]]:
+    def source_in_memory_steps(self) -> List[DfTransformStepConfig]:
         return self._source_in_memory_steps
 
     @property
-    def in_memory_steps(self) -> Optional[List[DfTransformStepConfig]]:
+    def in_memory_steps(self) -> List[DfTransformStepConfig]:
         return self._in_memory_steps
 
     @property
-    def permanent_steps(self) -> Optional[List[DfTransformStepConfig]]:
+    def permanent_steps(self) -> List[DfTransformStepConfig]:
         return self._permanent_steps
 
     def to_dict(self) -> Tuple[str, dict]:
@@ -98,10 +105,7 @@ class DfTransformConfig:
         -------
         tuple of str and dict, transform_id and transform's dictionary representation.
         """
-        result = {}
-
-        if self._df_format:
-            result[TRANSFORM_DF_FORMAT_KEY] = self._df_format
+        result: Dict[str, Any] = {TRANSFORM_DF_FORMAT_KEY: self._df_format}
 
         if self._source_id:
             result[TRANSFORM_SOURCE_ID_KEY] = self._source_id
@@ -121,8 +125,7 @@ class DfTransformConfig:
         return self.transform_id, result
 
     @staticmethod
-    def from_dict(transform_id: str,
-                  transform_dict: dict):
+    def from_dict(transform_id: str, transform_dict: dict):
         """
         Builds DfTransformConfig instance out of serialized dictionary.
 
@@ -139,25 +142,30 @@ class DfTransformConfig:
         """
         step_configs_getter = DfTransformConfig._transform_step_configs_from
         df_format = transform_dict.get(TRANSFORM_DF_FORMAT_KEY)
-        source_id = transform_dict.get(TRANSFORM_SOURCE_ID_KEY)
-        source_in_memory_transforms = step_configs_getter(transform_dict=transform_dict,
-                                                          key=TRANSFORM_SOURCE_IN_MEMORY_KEY)
-        in_memory_transforms = step_configs_getter(transform_dict=transform_dict,
-                                                   key=TRANSFORM_IN_MEMORY_KEY)
-        permanent_transforms = step_configs_getter(transform_dict=transform_dict,
-                                                   key=TRANSFORM_PERMANENT_KEY)
+        if df_format is None:
+            raise Exception(
+                "Provide a file format you want your transform " "to be saved in using df_format key in the config"
+            )
 
-        result = DfTransformConfig(transform_id=transform_id,
-                                   df_format=df_format,
-                                   source_id=source_id,
-                                   source_in_memory_steps=source_in_memory_transforms,
-                                   in_memory_steps=in_memory_transforms,
-                                   permanent_steps=permanent_transforms)
+        source_id = transform_dict.get(TRANSFORM_SOURCE_ID_KEY)
+        source_in_memory_transforms = step_configs_getter(
+            transform_dict=transform_dict, key=TRANSFORM_SOURCE_IN_MEMORY_KEY
+        )
+        in_memory_transforms = step_configs_getter(transform_dict=transform_dict, key=TRANSFORM_IN_MEMORY_KEY)
+        permanent_transforms = step_configs_getter(transform_dict=transform_dict, key=TRANSFORM_PERMANENT_KEY)
+
+        result = DfTransformConfig(
+            transform_id=transform_id,
+            df_format=df_format,
+            source_id=source_id,
+            source_in_memory_steps=source_in_memory_transforms,
+            in_memory_steps=in_memory_transforms,
+            permanent_steps=permanent_transforms,
+        )
         return result
 
     @staticmethod
-    def _transform_step_configs_from(transform_dict: dict,
-                                     key: str) -> Optional[List[DfTransformStepConfig]]:
+    def _transform_step_configs_from(transform_dict: dict, key: str) -> Optional[List[DfTransformStepConfig]]:
         """
         When deserializing we need to transform steps into objects as well.
 
@@ -175,9 +183,6 @@ class DfTransformConfig:
         step_dicts = transform_dict.get(key)
         steps = None
         if step_dicts:
-            steps = [
-                DfTransformStepConfig.from_dict(step_dict=step_dict)
-                for step_dict in step_dicts
-            ]
+            steps = [DfTransformStepConfig.from_dict(step_dict=step_dict) for step_dict in step_dicts]
 
         return steps

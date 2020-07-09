@@ -11,10 +11,7 @@ def save_args():
 
 @pytest.fixture()
 def save_kwargs():
-    return {
-        'a': 1,
-        'b': 2
-    }
+    return {"a": 1, "b": 2}
 
 
 @pytest.fixture()
@@ -24,10 +21,7 @@ def load_args():
 
 @pytest.fixture()
 def load_kwargs():
-    return {
-        'c': 3,
-        'd': 4
-    }
+    return {"c": 3, "d": 4}
 
 
 class TestDfCache(DfCache):
@@ -40,30 +34,22 @@ class TestDfCache(DfCache):
 
 @pytest.fixture()
 def instance(save_args, save_kwargs, load_args, load_kwargs):
-    result = TestDfCache(save_args=save_args,
-                         save_kwargs=save_kwargs,
-                         load_args=load_args,
-                         load_kwargs=load_kwargs)
+    result = TestDfCache(save_args=save_args, save_kwargs=save_kwargs, load_args=load_args, load_kwargs=load_kwargs,)
     return result
 
 
 def test_save(mocker, instance, save_args, save_kwargs):
-    save_mock = mocker.patch.object(instance, '_save')
+    save_mock = mocker.patch.object(instance, "_save")
     df = mocker.Mock()
-    path = '/some/path'
+    path = "/some/path"
     instance.save(df=df, path=path)
 
-    save_mock.assert_called_with(df=df,
-                                 path=path,
-                                 *save_args,
-                                 **save_kwargs)
+    save_mock.assert_called_with(df=df, path=path, *save_args, **save_kwargs)
 
 
 def test_load(mocker, instance, load_args, load_kwargs):
-    load_mock = mocker.patch.object(instance, '_load')
-    path = '/some/path'
+    load_mock = mocker.patch.object(instance, "_load")
+    path = "/some/path"
     instance.load(path=path)
 
-    load_mock.assert_called_with(path=path,
-                                 *load_args,
-                                 **load_kwargs)
+    load_mock.assert_called_with(path=path, *load_args, **load_kwargs)

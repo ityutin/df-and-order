@@ -1,5 +1,5 @@
-from typing import List
 import pandas as pd
+from typing import List
 
 from df_and_order.df_transform_step import DfTransformStep, DfTransformStepConfig
 
@@ -8,6 +8,7 @@ class DropColsTransformStep(DfTransformStep):
     """
     Simply drops some undesired columns from a dataframe.
     """
+
     def __init__(self, cols: List[str]):
         super().__init__()
 
@@ -25,6 +26,7 @@ class DatesTransformStep(DfTransformStep):
     """
     Converts cols to datetime type
     """
+
     def __init__(self, cols: List[str]):
         super().__init__()
 

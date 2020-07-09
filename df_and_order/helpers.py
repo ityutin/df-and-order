@@ -58,9 +58,9 @@ def split_module_path(module_path: str) -> Tuple[str, str]:
     -------
     Tuple of strings, one for the module name, second for the class name
     """
-    components = module_path.split('.')
+    components = module_path.split(".")
     class_name = components[-1]
-    module_name = '.'.join(components[:-1])
+    module_name = ".".join(components[:-1])
 
     return module_name, class_name
 
@@ -97,7 +97,7 @@ def get_module_path_from_type(py_type) -> str:
     -------
     String representation of full module path like module1.submodule2.ClassName
     """
-    result = inspect.getmodule(py_type).__name__ + '.' + py_type.__name__
+    result = inspect.getmodule(py_type).__name__ + "." + py_type.__name__  # type: ignore
     return result
 
 
