@@ -9,13 +9,14 @@ pip install df_and_order
 
 Using **df-and-order** your interactions with dataframes become very clean and predictable.
 
-- Tired of absolute file paths in shared notebooks in your repository?
-- Can't remember how your dataframes were generated?
-- Want to have a reproducibility on data transformations?
+- Tired of absolute file paths to data in shared notebooks in your repository?
+- Can't remember how your datasets were generated?
+- Want to have safe and reproducible data transformations?
 - Like declarative config-based solutions?
 
 Good news for you!
 
+## How it looks in code?
 Imagine the world where all you need to do for reading some dataframe you need just a few lines:
 
 ```python
@@ -31,26 +32,42 @@ reader = MagicDfReader()
 model_input_df = reader.read(df_id='user_activity_may_2020', transform_id='model_input')
 ```
 
-It is possible by having a config file that will look like this:
+## Wow. Is it really magic?
+**df-and-order** works with yaml configs. Every config contains metadata about a dataset as well as all desired transfomations.
+Here's an example:
 ```yaml
-df_id: user_activity_may_2020 # here's the dataframe identifier
+df_id: user_activity_may_2020  # here's the dataframe identifier
 initial_df_format: csv
-metadata: # some useful information about the dataset
+metadata:  # this section contains some useful information about the dataset
   author: Data Man
   data_collection_date: 2020-05-01
-transformed_df_format: csv
 transforms:
-  model_input: # here's the transform identifier
-    in_memory: # means we want to perform transformations in memory every time we calling it, permanent transforms are supported as well
-    - module_path: df_and_order.steps.DropColsTransformStep # file with the transformation's code
-      params: # init params for the transformation
+  model_input:  # here's the transform identifier
+    df_format: csv
+    in_memory:  # means we want to perform transformations in memory every time we calling it, permanent transforms are supported as well
+    - module_path: df_and_order.steps.pd.DropColsTransformStep  # file where to find class describing some transformation. this one drops columns
+      params:  # init params for the transformation class
         cols:
         - redundant_col
-    - module_path: df_and_order.steps.DatesTransformStep - another transformation
+    - module_path: df_and_order.steps.DatesTransformStep  # another transformation that converts str to datetime
       params:
         cols:
         - date_col
 ```
+
+## Okay, what exactly is a **df-and-order**'s transform?
+
+Every transformation is about changing an initial dataset in any way.
+
+A transformation is made of one or many steps. Each step represents some operation. 
+Here are examples of such operations:
+- dropping cols
+- adding cols
+- transforming existing cols
+- etc
+
+**df-and-order** uses subclasses of `DfTransformStepConfig` to describe a step. It's possible and highly recommended to declare init parameters for any step in config. 
+Using Single Responsibility principle we achieve a granular control over our entire transformation.
 
 Just by looking at the config you can say how the transformed dataframe was created.
 
@@ -60,10 +77,3 @@ Just by looking at the config you can say how the transformed dataframe was crea
 
 Hope the lib will help somebody to boost the productivity.
 
-Unit-tested, btw!
-
-### Requirements
-```
-pandas
-python 3.7
-``` 
