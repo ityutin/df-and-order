@@ -176,7 +176,7 @@ class DfReader:
         self, df_id: str, df_config: DfConfig, forced: bool, transform: DfTransformConfig,
     ):
         if transform.source_id:
-            source_transform = df_config.transforms_by(transform_id=transform.source_id)
+            source_transform = self._get_source_transform(transform=transform, df_config=df_config)
             self._try_check_transform(
                 df_id=df_id, transform=source_transform, forced=forced, child_transform=transform,
             )
@@ -208,11 +208,14 @@ class DfReader:
             df_cache.save(df=df, path=df_path)
             source_transform = None
             if transform.source_id:
-                source_transform = df_config.transforms_by(transform_id=transform.source_id)
+                source_transform = self._get_source_transform(transform=transform, df_config=df_config)
             state = DfTransformState(transform=transform, source_transform=source_transform)
             self._save_transform_state(df_id=df_id, state=state)
 
         return df
+
+    def _get_source_transform(self, transform: DfTransformConfig, df_config: DfConfig) -> Optional[DfTransformConfig]:
+        return df_config.transforms_by(transform_id=transform.source_id)
 
     def _save_transform_state(self, df_id: str, state: DfTransformState):
         transforms_state = self._transforms_state_dicts(df_id=df_id)
