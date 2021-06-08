@@ -168,7 +168,7 @@ class DfReader:
     ):
         if transform.source_id:
             source_transform = df_config.transforms_by(transform_id=transform.source_id)
-            df = self._read_transformed(df_id=df_id, transform=source_transform, df_config=df_config, forced=forced,)
+            df = self.read(df_id=df_id, transform=source_transform, forced=forced)
         else:
             df = self._read_initial(df_id=df_id, df_config=df_config)
         return df
